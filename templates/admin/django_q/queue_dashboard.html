@@ -1,0 +1,106 @@
+{% load i18n unfold %}
+
+<div class="mb-6 queue-dashboard">
+    {% if broker_error %}
+        <div class="bg-red-50 border border-red-200 mb-4 p-3 rounded-default text-red-700 text-sm dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400">
+            {% translate "Could not reach the Redis broker:" %} {{ broker_error }}
+        </div>
+    {% endif %}
+
+    <div class="gap-4 grid grid-cols-2 mb-4 lg:grid-cols-4">
+        <div id="queue-depth-card">
+            {% include "admin/django_q/_queue_depth_card.html" %}
+        </div>
+
+        {% component "unfold/components/card.html" %}
+            <div class="flex items-center gap-1.5 mb-2 text-base-400 dark:text-base-500">
+                <span class="material-symbols-outlined text-base!">bolt</span>
+                <span class="font-medium text-xs tracking-wide uppercase">{% translate "Workers online" %}</span>
+            </div>
+            <div class="font-semibold text-2xl text-important">
+                {{ cluster_stats|length }}
+            </div>
+            <div class="text-base-400 text-xs">
+                {% if cluster_stats %}
+                    {% for c in cluster_stats %}{{ c.worker_count }}{% if not forloop.last %} + {% endif %}{% endfor %} {% translate "worker(s) per cluster" %}
+                {% else %}
+                    {% translate "no cluster reporting in" %}
+                {% endif %}
+            </div>
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" %}
+            <div class="flex items-center gap-1.5 mb-2 text-base-400 dark:text-base-500">
+                <span class="material-symbols-outlined text-base!">check_circle</span>
+                <span class="font-medium text-xs tracking-wide uppercase">{% translate "Successful (7d)" %}</span>
+            </div>
+            <div class="font-semibold text-2xl text-green-600 dark:text-green-400">{{ task_summary.total_success }}</div>
+            <div class="text-base-400 text-xs">{% translate "completed tasks" %}</div>
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" %}
+            <div class="flex items-center gap-1.5 mb-2 text-base-400 dark:text-base-500">
+                <span class="material-symbols-outlined text-base!">error</span>
+                <span class="font-medium text-xs tracking-wide uppercase">{% translate "Failed (7d)" %}</span>
+            </div>
+            <div class="font-semibold text-2xl text-red-600 dark:text-red-400">{{ task_summary.total_failure }}</div>
+            <div class="text-base-400 text-xs">{% translate "failed tasks" %}</div>
+        {% endcomponent %}
+    </div>
+
+    {% include "admin/django_q/_queued_tasks_card.html" %}
+
+    <div class="gap-4 grid grid-cols-1 mb-4 lg:grid-cols-3">
+        <div class="lg:col-span-2">
+            {% component "unfold/components/card.html" with title="Task throughput — last 7 days" %}
+                {% component "unfold/components/chart/line.html" with data=task_chart_data height="260" %}{% endcomponent %}
+            {% endcomponent %}
+        </div>
+
+        {% component "unfold/components/card.html" with title="Clusters" %}
+            {% if cluster_stats %}
+                {% component "unfold/components/table.html" with table=cluster_stats_table striped=1 card_included=1 %}{% endcomponent %}
+            {% else %}
+                <p class="text-base-400 text-sm">{% translate "No cluster has reported status yet." %}</p>
+            {% endif %}
+        {% endcomponent %}
+    </div>
+
+    <div class="gap-4 grid grid-cols-1 lg:grid-cols-2">
+        {% component "unfold/components/card.html" with title="Recent failures" %}
+            {% if recent_failure_cards %}
+                <ul class="divide-base-100 divide-y dark:divide-base-800">
+                    {% for failure in recent_failure_cards %}
+                        <li class="py-2.5 first:pt-0 last:pb-0 text-sm">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-medium text-important">{{ failure.task_link }}</span>
+                                <span class="text-base-400 text-xs whitespace-nowrap">{{ failure.when }}</span>
+                            </div>
+                            <p class="break-words mt-1 text-base-400 text-xs">{{ failure.result }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-base-400 text-sm">{% translate "No failures in range." %}</p>
+            {% endif %}
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" with title="Upcoming schedules" %}
+            {% if upcoming_schedule_cards %}
+                <ul class="divide-base-100 divide-y dark:divide-base-800">
+                    {% for schedule in upcoming_schedule_cards %}
+                        <li class="py-2.5 first:pt-0 last:pb-0 text-sm">
+                            <div class="flex items-start justify-between gap-2">
+                                <span class="break-words font-medium min-w-0 text-important">{{ schedule.schedule_link }}</span>
+                                <span class="text-base-400 text-xs whitespace-nowrap">{{ schedule.next_run }}</span>
+                            </div>
+                            <p class="mt-1 text-base-400 text-xs">{{ schedule.type }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-base-400 text-sm">{% translate "No schedules configured." %}</p>
+            {% endif %}
+        {% endcomponent %}
+    </div>
+</div>

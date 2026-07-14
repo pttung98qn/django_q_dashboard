@@ -1,0 +1,16 @@
+{% load i18n unfold %}
+
+<div id="queued-tasks-card" class="mb-4" hx-get="{% url 'django_q:queued_tasks_card' %}" hx-trigger="every 5s" hx-swap="outerHTML">
+    {% component "unfold/components/card.html" with title="Tasks waiting in Redis" %}
+        {% if queued_tasks %}
+            {% component "unfold/components/table.html" with table=queued_tasks_table striped=1 card_included=1 %}{% endcomponent %}
+            {% if queue_depth and queue_depth > queued_tasks|length %}
+                <p class="mt-3 text-base-400 text-xs">
+                    {% translate "Showing the oldest" %} {{ queued_tasks|length }} {% translate "of" %} {{ queue_depth }} {% translate "queued tasks." %}
+                </p>
+            {% endif %}
+        {% else %}
+            <p class="text-base-400 text-sm">{% translate "No tasks currently waiting in the queue." %}</p>
+        {% endif %}
+    {% endcomponent %}
+</div>

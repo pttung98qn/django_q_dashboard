@@ -1,0 +1,9 @@
+{% extends "admin/app_index.html" %}
+
+{% load queue_dashboard %}
+
+{% block content %}
+    {% queue_dashboard %}
+
+    {{ block.super }}
+{% endblock %}
