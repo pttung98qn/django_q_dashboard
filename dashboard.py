@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
-from django_q_dashboard import selectors
+from . import selectors
 
 STATUS_COLORS = {
     "Working": "text-green-600 dark:text-green-400",

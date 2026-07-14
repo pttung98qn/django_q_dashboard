@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db import Error as DBError, transaction
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -55,6 +56,21 @@ def get_cluster_stats() -> list[dict]:
 
 def get_task_summary(days: int = 7) -> dict:
     """Success/failure totals and a daily breakdown for the last `days` days."""
+    try:
+        with transaction.atomic():
+            return _get_task_summary(days)
+    except DBError:
+        # TruncDate() below sends the currently active Django timezone name
+        # straight to the database via `AT TIME ZONE`. If the host app
+        # activated a timezone name (from a cookie/geo-IP guess) that this
+        # database's tzdata doesn't recognize (e.g. legacy alias
+        # "Asia/Saigon" on a trimmed Postgres install), the query fails.
+        # Retry once in UTC, which every Postgres install understands.
+        with timezone.override("UTC"):
+            return _get_task_summary(days)
+
+
+def _get_task_summary(days: int) -> dict:
     since = timezone.now() - timedelta(days=days)
 
     success_by_day = dict(

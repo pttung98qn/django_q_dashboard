@@ -1,6 +1,6 @@
 from django.urls import path
 
-from django_q_dashboard import views
+from . import views
 
 app_name = "django_q"
 

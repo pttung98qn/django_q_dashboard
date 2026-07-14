@@ -1,7 +1,7 @@
 from django import template
 from django.template.context import RequestContext
 
-from django_q_dashboard.dashboard import build_queue_dashboard_context
+from ..dashboard import build_queue_dashboard_context
 
 register = template.Library()
 
